@@ -1,14 +1,19 @@
 from time import sleep
 
+from mininetfed.core.fed_options import ServerOptions, ClientAcceptorType, ClientSelectorType, AggregatorType
 from mininetfed.sim.net import MininetFed
 from mininetfed.sim.nodes import FedServerNode, FedClientNode, FedBrokerNode
-from mininetfed.sim.util.docker_utils import build_fed_node_docker_image, build_fed_broker_docker_image
+from mininetfed.sim.util.docker_utils import build_fed_node_docker_image
 
-# See server/client_selection.py for the available client_selector models
-# TODO: acertar as opcoes no mininetfed
-server_args = {"min_trainers": 4, "num_rounds": 100, "stop_acc": 0.999,
-               'client_selector': 'All', 'aggregator': "FedAvg"}
-
+server_args = {
+    ServerOptions.MIN_CLIENTS      : 4,
+    ServerOptions.NUM_ROUNDS       : 100,
+    ServerOptions.STOP_VALUE       : 0.90,
+    ServerOptions.EARLY_STOP_VALUE : 10,
+    ServerOptions.CLIENT_ACCEPTOR  : ClientAcceptorType.ALL_CLIENTS,
+    ServerOptions.CLIENT_SELECTOR  : ClientSelectorType.ALL_CLIENTS,
+    ServerOptions.MODEL_AGGREGATOR : AggregatorType.FED_AVG
+}
 
 def topology():
 
