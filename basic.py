@@ -20,35 +20,30 @@ def topology():
     client_dimage = build_fed_node_docker_image("basic_client", "client_code/client_requirements.txt")["tag"]
 
     net = MininetFed()
+    try:
+        s1 = net.addSwitch(name="s1", failMode='standalone')
 
-    s1 = net.addSwitch(name="s1", failMode='standalone')
+        broker = net.addHost(name="broker", cls=FedBrokerNode)
+        net.addLink(s1, broker)
 
-    broker = net.addHost(name="broker", cls=FedBrokerNode)
-    net.addLink(s1, broker)
+        server = net.addHost(name="server", cls=FedServerNode, server_args=server_args)
+        net.addLink(s1, server)
 
-    server = net.addHost(name="server", cls=FedServerNode, server_args=server_args)
-    net.addLink(s1, server)
+        clients = []
+        for i in range(4):
+            c = net.addHost(name=f'client{i}', cls=FedClientNode, script="mnist_trainer.py", dimage=client_dimage, client_folder=f"clients/client{i}")
+            net.addLink(s1, c)
+            clients.append(c)
 
-    clients = []
-    for i in range(4):
-        c = net.addHost(name=f'client{i}', cls=FedClientNode, script="mnist_trainer.py", dimage=client_dimage, client_folder=f"clients/client{i}")
-        net.addLink(s1, c)
-        clients.append(c)
+        print('*** Starting network...\n')
+        net.build()
+        net.addNAT(name='nat0', linkTo='s1', ip='192.168.210.254').configDefault()
+        s1.start([])
 
-    print('*** Starting network...\n')
-    net.build()
-    net.addNAT(name='nat0', linkTo='s1', ip='192.168.210.254').configDefault()
-    s1.start([])
-
-    broker.run()
-    broker_address = broker.IP(intf="brk-eth0")
-
-    server.run(broker_address=broker_address)
-
-    sleep(3)
-
-    for client in clients:
-        client.run(broker_address=broker_address)
+        net.runFedNodes()
+    finally:
+        # isso garante limpeza mesmo se der exceção no meio
+        net.stop()
 
 if __name__ == '__main__':
     topology()

@@ -1,8 +1,10 @@
 import os
 import numpy as np
+from keras.src.utils import to_categorical
 from mininetfed.core.dto.client_info import ClientInfo
 from mininetfed.core.dto.dataset_info import DatasetInfo
-from mininetfed.core.dto.metrics import Metrics, MetricType
+from mininetfed.core.dto.metrics import Metrics
+from mininetfed.core.fed_options import MetricType
 from mininetfed.core.nodes.fed_client import FedClient
 from numpy import ndarray
 from sklearn.model_selection import train_test_split
@@ -41,23 +43,27 @@ class TrainerMINIST(FedClient):
     def prepare_data(self, path_to_data: str) -> DatasetInfo:
         # Carregar arquivo .npz
         data = np.load(path_to_data + "/mnist_iid_N4_subset.npz")
-        X = data["X"]  # shape (N, 28, 28)
-        y = data["y"]  # shape (N,)
-
-        # Converter para float32 para usar no keras (opcional)
-        X = X.astype("float32") / 255.0
+        X = data["X"].astype("float32") / 255.0
+        y = data["y"].astype("int32")
 
         # Adicionar canal (necessário para CNNs)
         X = X[..., None]  # (N, 28, 28, 1)
 
         # Fazer o split
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+        X_train, X_test, y_train, y_test = train_test_split(
             X, y,
             test_size=0.2,
             random_state=42,
             stratify=y,  # mantém distribuição das classes
             shuffle=True
         )
+
+        y_train = to_categorical(y_train, num_classes=10)
+        y_test = to_categorical(y_test, num_classes=10)
+
+        self.X_train, self.X_test = X_train, X_test
+        self.y_train, self.y_test = y_train, y_test
+
         return DatasetInfo(client_id=self.get_client_id(), num_samples=self.X_train.shape[0])
 
 
