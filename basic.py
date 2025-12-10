@@ -1,5 +1,3 @@
-from time import sleep
-
 from mininetfed.core.fed_options import ServerOptions, ClientAcceptorType, ClientSelectorType, AggregatorType
 from mininetfed.sim.net import MininetFed
 from mininetfed.sim.nodes import FedServerNode, FedClientNode, FedBrokerNode
@@ -8,7 +6,7 @@ from mininetfed.sim.util.docker_utils import build_fed_node_docker_image
 server_args = {
     ServerOptions.MIN_CLIENTS      : 4,
     ServerOptions.NUM_ROUNDS       : 100,
-    ServerOptions.STOP_VALUE       : 0.90,
+    ServerOptions.STOP_VALUE       : 0.98,
     ServerOptions.EARLY_STOP_VALUE : 10,
     ServerOptions.CLIENT_ACCEPTOR  : ClientAcceptorType.ALL_CLIENTS,
     ServerOptions.CLIENT_SELECTOR  : ClientSelectorType.ALL_CLIENTS,
@@ -40,7 +38,7 @@ def topology():
         net.addNAT(name='nat0', linkTo='s1', ip='192.168.210.254').configDefault()
         s1.start([])
 
-        net.runFedNodes()
+        net.runFed()
     finally:
         # isso garante limpeza mesmo se der exceção no meio
         net.stop()
